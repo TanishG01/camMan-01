@@ -8,6 +8,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
@@ -20,7 +21,9 @@ const PORT = process.env.PORT || 5000;
 // Security & Parsing Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  origin: process.env.FRONTEND_ORIGIN
+    ? [process.env.FRONTEND_ORIGIN, 'http://localhost:5173']
+    : true,
   credentials: true
 }));
 app.use(cookieParser());
@@ -35,6 +38,19 @@ if (process.env.NODE_ENV === 'development') {
 // Rate Limiter
 app.use('/api', apiLimiter);
 
+// Ensure DB is connected for serverless invocations
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState >= 1) {
+    return next();
+  }
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Mount API routes
 app.use('/api/v1', apiRoutes);
 
@@ -42,7 +58,7 @@ app.use('/api/v1', apiRoutes);
 app.use(errorHandler);
 
 // Connect DB & Start Server
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   connectDB().then(() => {
     initCronJobs();
     app.listen(PORT, () => {
