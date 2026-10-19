@@ -16,6 +16,15 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+let analytics = null;
+if (typeof window !== 'undefined') {
+  try {
+    analytics = getAnalytics(app);
+  } catch (err) {
+    // Analytics is blocked or unsupported in this browser environment
+    console.warn('[Firebase] Analytics disabled:', err.message);
+  }
+}
+export { analytics };
 
 export default app;
