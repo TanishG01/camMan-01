@@ -19,7 +19,7 @@ const connectDB = async () => {
   }
 
   if (process.env.VERCEL && (uri.includes('127.0.0.1') || uri.includes('localhost'))) {
-    const errorMsg = 'MONGODB_URI is pointing to localhost (127.0.0.1). Cloud serverless functions on Vercel cannot access your local MongoDB. Please set MONGODB_URI in Vercel Project Settings to a remote MongoDB Atlas cluster URI.';
+    const errorMsg = `MONGODB_URI is currently set to "${uri}" on Vercel. Cloud serverless functions cannot connect to localhost/127.0.0.1. Please update MONGODB_URI in your Vercel Project Settings (Settings -> Environment Variables) to your MongoDB Atlas cluster URI, and click Redeploy.`;
     console.error(`[MongoDB] Configuration error: ${errorMsg}`);
     throw new Error(errorMsg);
   }
