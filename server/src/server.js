@@ -36,7 +36,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Rate Limiter
-app.use('/api', apiLimiter);
+app.use(apiLimiter);
 
 // Ensure DB is connected for serverless invocations
 app.use(async (req, res, next) => {
@@ -51,8 +51,19 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Mount API routes
+// Mount API routes with flexible prefixes to support direct, proxied, and rewritten paths
 app.use('/api/v1', apiRoutes);
+app.use('/v1', apiRoutes);
+app.use('/api', apiRoutes);
+app.use('/', apiRoutes);
+
+// Explicit 404 Handler for unmapped routes
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl || req.url}`
+  });
+});
 
 // Global Error Handler
 app.use(errorHandler);
